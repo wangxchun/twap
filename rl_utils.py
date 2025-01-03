@@ -35,12 +35,12 @@ def moving_average(a, window_size):
 def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size, batch_size, save_path_actor=None, save_path_critic=None, save_interval=100, load_actor_path=None, load_critic_path=None):
 
     # Get Agent Type
-    agent_str = str(agent)  # Convert the agent object to a string
-    start = agent_str.find('<') + 1  # Find the first '<' and move one character forward
-    end = agent_str.find('.')        # Find the first '.' after the module name
+    agent_str = str(agent)
+    start = agent_str.find('<') + 1
+    end = agent_str.find('.')
     if start != -1 and end != -1:
-        module_name = agent_str[start:end]  # Extract "dqn_agent"
-        agent_type = module_name.split('_')[0]  # Extract "dqn"
+        module_name = agent_str[start:end]
+        agent_type = module_name.split('_')[0]
 
     # Load model if paths are provided
     if load_actor_path and load_critic_path:
@@ -50,18 +50,26 @@ def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size
     with tqdm(total=num_episodes, desc='Training') as pbar:
         for i_episode in range(num_episodes):
             episode_return = 0
-            state = env.reset(i_episode%2)
+            state = env.reset(i_episode)
             done = False
+            episode_transitions = []
             while not done:
                 action = agent.take_action(state)
                 next_state, reward, done, _ = env.step(action)
-                replay_buffer.add(state, action, reward, next_state, done)
+                episode_transitions.append((state, action, reward, next_state, done))
                 state = next_state
                 episode_return += reward
-                if replay_buffer.size() > minimal_size:
-                    b_s, b_a, b_r, b_ns, b_d = replay_buffer.sample(batch_size)
-                    transition_dict = {'states': b_s, 'actions': b_a, 'next_states': b_ns, 'rewards': b_r, 'dones': b_d}
-                    agent.update(transition_dict)
+            
+            # Add to buffer only when episode is done
+            for transition in episode_transitions:
+                replay_buffer.add(*transition)
+
+            # Update only when episode is done
+            if replay_buffer.size() > minimal_size:
+                b_s, b_a, b_r, b_ns, b_d = replay_buffer.sample(batch_size)
+                transition_dict = {'states': b_s, 'actions': b_a, 'next_states': b_ns, 'rewards': b_r, 'dones': b_d}
+                agent.update(transition_dict)
+            
             return_list.append(episode_return)
             pbar.set_postfix({'episode': '%d' % (i_episode + 1), 'return': '%.3f' % episode_return})
             wandb.log({"Episode Return": episode_return})
@@ -80,7 +88,6 @@ def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size
                     print(f"Model saved to: {save_path}")
 
     return return_list
-
 
 def compute_advantage(gamma, lmbda, td_delta):
     td_delta = td_delta.detach().numpy()
