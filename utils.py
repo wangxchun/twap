@@ -53,9 +53,9 @@ def generate_table(left_col, right_col, table_title):
     return general_table
 
 
-def get_env_param():
+def get_env_param(nums_day, data_path, ave_price_path):
     # Create a simulation environment
-    env = custom.MarketEnvironment()
+    env = custom.MarketEnvironment(nums_day, data_path, ave_price_path)
     return env
 
 

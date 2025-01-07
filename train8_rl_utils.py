@@ -84,7 +84,7 @@ def main(args):
         wandb.init(project=args.project_name, config=args, name=",".join(map(str, args.hidden_layers)))
         
         # Load environment parameters
-        env = utils.get_env_param()
+        env = utils.get_env_param(args.nums_day, args.data_path, args.market_average_price_file_path)
         env_name = 'Stocks Trading'
 
         # Train the agent
@@ -158,6 +158,11 @@ if __name__ == "__main__":
     # DDPG & PPO
     parser.add_argument("--actor-lr", type=float, default=1e-4, help="Learning rate for actor")
     parser.add_argument("--critic-lr", type=float, default=5e-3, help="Learning rate for critic")
+
+    # custom market
+    parser.add_argument("--nums-day", type=int, default=2, help="How many days of data is used to train?")
+    parser.add_argument("--data-path", type=str, default=f'./train_data/taida_processed_{2}_days_data.csv', help="Data Path")
+    parser.add_argument("--market-average-price-file-path", type=str, default=f'./train_data/weighted_avg_price_{2}_days.csv', help="Market Average Price File Path")
 
     args = parser.parse_args()
     main(args)

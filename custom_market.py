@@ -6,12 +6,10 @@ import collections
 import wandb
 
 class MarketEnvironment:
-    def __init__(self, time_horizon=100, total_shares=1000):
-        self.N = 2
-        csv_file = f'./taida_processed_{self.N}_days_data.csv'
-        market_average_price_file = f'weighted_avg_price_{self.N}_days.csv'
-        self.data = self.load_csv(csv_file)
+    def __init__(self, nums_day = 2, data_path = f'./train_data/taida_processed_{2}_days_data.csv', market_average_price_file = f'./train_data/weighted_avg_price_{2}_days.csv', time_horizon=100, total_shares=1000):
+        self.data = self.load_csv(data_path)
         self.market_ave_data = self.load_csv(market_average_price_file)
+        self.nums_day = nums_day
         print("CSV Column Headers:", self.data.columns.tolist())  # 打印欄位標題
 
         # Set the variables for the initial state
@@ -35,12 +33,12 @@ class MarketEnvironment:
         self.market_prices = []
 
         self.current_time = i_episode * self.timeHorizon
-        self.market_average_price = self.market_ave_data['weighted_avg_price'][i_episode % self.N].item()
+        self.market_average_price = self.market_ave_data['weighted_avg_price'][i_episode % self.nums_day].item()
         self.state = np.array(list(self.logReturns) + [self.timeHorizon / self.timeHorizon, self.shares_remaining])
         self.trade_list = []
         self.done = False
-        self.prevPrice = self.data['market_price'].iloc[self.current_time % (self.N * self.timeHorizon)].item() # TODO
-        self.currentPrice = self.data['market_price'].iloc[self.current_time % (self.N * self.timeHorizon)].item() # TODO
+        self.prevPrice = self.data['market_price'].iloc[self.current_time % (self.nums_day * self.timeHorizon)].item() # TODO
+        self.currentPrice = self.data['market_price'].iloc[self.current_time % (self.nums_day * self.timeHorizon)].item() # TODO
         return self.state
 
     def start_transactions(self):
@@ -53,7 +51,7 @@ class MarketEnvironment:
         shares_to_sell = min(action.item(), self.shares_remaining)
 
         # 更新市場價格
-        self.currentPrice = self.data['market_price'].iloc[self.current_time % (self.N * self.timeHorizon)].item()
+        self.currentPrice = self.data['market_price'].iloc[self.current_time % (self.nums_day * self.timeHorizon)].item()
 
         self.shares_remaining -= shares_to_sell
         self.totalCapture += shares_to_sell * self.totalShares * self.currentPrice
@@ -66,10 +64,9 @@ class MarketEnvironment:
         # Calculate the weighted average price and market average price only after checking if done
         weighted_average_price = 0
         if len(self.trade_list) > 0:
-            total_value_sold = sum([trade[1] * self.totalShares * self.data['market_price'].iloc[trade[0] % self.N] for trade in self.trade_list])
+            total_value_sold = sum([trade[1] * self.totalShares * self.data['market_price'].iloc[trade[0] % self.nums_day] for trade in self.trade_list])
             total_shares_sold = sum([trade[1] * self.totalShares for trade in self.trade_list])
             weighted_average_price = total_value_sold / total_shares_sold if total_shares_sold > 0 else 0
-            # (self.market_average_price - 1)
 
         # Market average price (current market price)
         market_average_price = self.currentPrice
@@ -94,9 +91,6 @@ class MarketEnvironment:
                 "Shares Remaining": self.shares_remaining,
                 "Reward": reward,
             })
-
-        # print("Total Capture (in millions):", self.totalCapture / 10**6)
-        # print("Shares Remaining (in millions):", self.shares_remaining / 10**6)
 
         # Update previous price and increment time after checking done condition
         self.prevPrice = self.currentPrice
