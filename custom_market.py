@@ -45,6 +45,8 @@ class MarketEnvironment:
         print("Starting transactions...")
 
     def step(self, action):
+        info = {}
+
         if self.done:
             raise ValueError("Environment has finished. Please reset.")
 
@@ -86,18 +88,20 @@ class MarketEnvironment:
             print("performance:", performance * 1e5)
             self.done = True
 
-            wandb.log({
-                "Total Capture": self.totalCapture,
-                "Shares Remaining": self.shares_remaining,
-                "Reward": reward,
-                # "Performance (bp)": performance * 1e5,
-            })
+            # wandb.log({
+            #     "Total Capture": self.totalCapture,
+            #     "Shares Remaining": self.shares_remaining,
+            #     "Reward": reward,
+            #     # "Performance (bp)": performance * 1e5,
+            # })
+
+            info = {"Performance": performance}
 
         # Update previous price and increment time after checking done condition
         self.prevPrice = self.currentPrice
         self.current_time += 1
 
-        return self.state, reward, self.done, {}
+        return self.state, reward, self.done, info
 
 
     def get_trade_list(self):

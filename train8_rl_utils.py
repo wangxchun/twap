@@ -28,12 +28,9 @@ def train_agent(env, args, device):
     if args.agent_type == 'PPO':
         agent = PPOAgent(state_dim, args.hidden_layers, action_dim, args.actor_lr, args.critic_lr, args.lmbda, args.ppo_epoch, args.epsilon, args.gamma, device)
 
-    return_list = rl_utils.train_off_policy_agent(env, agent, args.n_episodes, replay_buffer, args.minimal_size, args.batch_size, save_interval=args.save_interval)
+    return_list = rl_utils.train_off_policy_agent(env, agent, args.nums_day, args.n_episodes, replay_buffer, args.minimal_size, args.batch_size, save_interval=args.save_interval)
     
-    # env.plot_and_save_curves()
-
     return return_list
-
 
 def test_ddpg(env, args, device):
     

@@ -32,7 +32,7 @@ def moving_average(a, window_size):
     end = (np.cumsum(a[:-window_size:-1])[::2] / r)[::-1]
     return np.concatenate((begin, middle, end))
 
-def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size, batch_size, save_path_actor=None, save_path_critic=None, save_interval=100, load_actor_path=None, load_critic_path=None):
+def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, minimal_size, batch_size, save_path_actor=None, save_path_critic=None, save_interval=100, load_actor_path=None, load_critic_path=None):
 
     # Get Agent Type
     agent_str = str(agent)
@@ -47,6 +47,7 @@ def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size
         agent.load_model(load_actor_path, load_critic_path)
 
     return_list = []
+    performance_list = []
     with tqdm(total=num_episodes, desc='Training') as pbar:
         for i_episode in range(num_episodes):
             episode_return = 0
@@ -55,10 +56,14 @@ def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size
             episode_transitions = []
             while not done:
                 action = agent.take_action(state)
-                next_state, reward, done, _ = env.step(action)
+                next_state, reward, done, info = env.step(action)
                 episode_transitions.append((state, action, reward, next_state, done))
                 state = next_state
                 episode_return += reward
+
+                # Collect performance data
+                if "Performance" in info and not np.isinf(info["Performance"]):
+                    performance_list.append(info["Performance"])
             
             # Add to buffer only when episode is done
             for transition in episode_transitions:
@@ -69,10 +74,24 @@ def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size
                 b_s, b_a, b_r, b_ns, b_d = replay_buffer.sample(batch_size)
                 transition_dict = {'states': b_s, 'actions': b_a, 'next_states': b_ns, 'rewards': b_r, 'dones': b_d}
                 agent.update(transition_dict)
-            
+
+             # Log performance every nums_day episodes
+            # if (i_episode + 1) % nums_day == 0 and performance_list:
+            if (i_episode + 1) % nums_day == 0:
+                if performance_list:
+                    avg_performance = sum(performance_list) / len(performance_list) * 1e5
+                    print("sum(performance_list):", sum(performance_list))
+                    print("len(performance_list):", len(performance_list))
+                    print(performance_list)
+                    print("avg_performance:", avg_performance)
+                    wandb.log({"Average Performance": avg_performance})
+                    performance_list = []
+                else:
+                    wandb.log({"Average Performance": 0})
+
             return_list.append(episode_return)
             pbar.set_postfix({'episode': '%d' % (i_episode + 1), 'return': '%.3f' % episode_return})
-            wandb.log({"Episode Return": episode_return})
+            # wandb.log({"Episode Return": episode_return})
             pbar.update(1)
 
             # Save model at specified intervals
