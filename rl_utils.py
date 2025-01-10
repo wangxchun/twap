@@ -93,6 +93,9 @@ def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, mi
                         "Return": avg_return,
                         "Average Performance": avg_performance,
                     })
+                    total_capture_list = []
+                    shares_remaining_list = []
+                    return_list = []
                     performance_list = []
 
             # pbar.set_postfix({'episode': '%d' % (i_episode + 1), 'return': '%.3f' % episode_return})
