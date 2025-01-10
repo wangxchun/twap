@@ -81,7 +81,8 @@ def main(args):
     
     if args.train_or_test == 'train':
         # Initialize Weights & Biases
-        wandb.init(project=args.project_name, config=args, name=",".join(map(str, args.hidden_layers)))
+        # name=",".join(map(str, args.hidden_layers)
+        wandb.init(project=args.project_name, config=args, name=args.wandb_run_name)
         
         # Load environment parameters
         env = utils.get_env_param(args.nums_day, args.data_path, args.market_average_price_file_path)
@@ -163,6 +164,7 @@ if __name__ == "__main__":
     parser.add_argument("--nums-day", type=int, default=2, help="How many days of data is used to train?")
     parser.add_argument("--data-path", type=str, default=f'./train_data/taida_processed_{2}_days_data.csv', help="Data Path")
     parser.add_argument("--market-average-price-file-path", type=str, default=f'./train_data/weighted_avg_price_{2}_days.csv', help="Market Average Price File Path")
+    parser.add_argument("--wandb-run-name", type=str, default=f'test', help="Wandb Run Name")
 
     args = parser.parse_args()
     main(args)

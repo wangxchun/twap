@@ -1,8 +1,14 @@
 import pandas as pd
+import argparse
+
+# 設定命令列參數
+parser = argparse.ArgumentParser(description="Calculate weighted average price from CSV data.")
+parser.add_argument('--num-days', type=int, help="Number of days (N) for the data file")
+args = parser.parse_args()
 
 # 載入CSV檔案
-N = 2
-csv_file = f'./taida_random_{N}_days_data.csv'
+N = args.num_days
+csv_file = f'./train_data/taida_random_{N}_days_data.csv'
 data = pd.read_csv(csv_file)
 
 # 轉換時間為datetime格式
@@ -41,7 +47,7 @@ result = grouped.apply(calculate_weighted_avg).reset_index(name='weighted_avg_pr
 print(result)
 
 # Save the result to a CSV file
-output_file = f'weighted_avg_price_{N}_days.csv'
+output_file = f'./train_data/weighted_avg_price_{N}_days.csv'
 result.to_csv(output_file, index=False)
 
 print(f"Result saved to {output_file}")

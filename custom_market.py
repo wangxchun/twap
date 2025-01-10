@@ -51,7 +51,8 @@ class MarketEnvironment:
         shares_to_sell = min(action.item(), self.shares_remaining)
 
         # 更新市場價格
-        self.currentPrice = self.data['market_price'].iloc[self.current_time % (self.nums_day * self.timeHorizon)].item()
+        # self.currentPrice = self.data['market_price'].iloc[self.current_time % (self.nums_day * self.timeHorizon)].item()
+        self.currentPrice = self.data['market_price'].iloc[self.current_time // self.timeHorizon]
 
         self.shares_remaining -= shares_to_sell
         self.totalCapture += shares_to_sell * self.totalShares * self.currentPrice
@@ -64,15 +65,11 @@ class MarketEnvironment:
         # Calculate the weighted average price and market average price only after checking if done
         weighted_average_price = 0
         if len(self.trade_list) > 0:
-            total_value_sold = sum([trade[1] * self.totalShares * self.data['market_price'].iloc[trade[0] % self.nums_day] for trade in self.trade_list])
+            total_value_sold = sum([trade[1] * self.totalShares * self.data['market_price'].iloc[trade[0] // self.timeHorizon] for trade in self.trade_list])
             total_shares_sold = sum([trade[1] * self.totalShares for trade in self.trade_list])
             weighted_average_price = total_value_sold / total_shares_sold if total_shares_sold > 0 else 0
 
-        # Market average price (current market price)
-        market_average_price = self.currentPrice
-
         reward =  weighted_average_price
-        # reward = self.currentPrice * shares_to_sell
         print("self.shares_remaining:", self.shares_remaining)
 
         # 更新狀態，將最近6個價格納入
@@ -83,13 +80,17 @@ class MarketEnvironment:
         if (self.current_time + 1) % self.timeHorizon == 0 or self.shares_remaining <= 0:
             if self.shares_remaining > 0.5:
                 reward = -1000
+            performance = (weighted_average_price - self.market_average_price) / self.market_average_price
+            print("weighted_average_price:", weighted_average_price)
+            print("market_average_price:", self.market_average_price)
+            print("performance:", performance * 1e5)
             self.done = True
 
             wandb.log({
                 "Total Capture": self.totalCapture,
-                # "Shares Remaining": self.shares_remaining * self.totalShares,
                 "Shares Remaining": self.shares_remaining,
                 "Reward": reward,
+                # "Performance (bp)": performance * 1e5,
             })
 
         # Update previous price and increment time after checking done condition

@@ -1,26 +1,26 @@
 # 定義不同的 --hidden-layers 配置
 $hidden_layers_list = @(
-    "16",
-    "16 16",
-    "16 16 16",
-    "32",
-    "32 32",
-    "32 32 32",
-    "64",
-    "64 64",
-    "64 64 64",
-    "128",
-    "128 128",
-    "128 128 128",
-    "256",
-    "256 256",
-    "256 256 256",
-    "512",
-    "512 512",
-    "512 512 512",
-    "1024",
-    "1024 1024",
-    "1024 1024 1024"
+    "16"
+    # "16 16",
+    # "16 16 16",
+    # "32",
+    # "32 32",
+    # "32 32 32",
+    # "64",
+    # "64 64",
+    # "64 64 64",
+    # "128",
+    # "128 128",
+    # "128 128 128",
+    # "256",
+    # "256 256",
+    # "256 256 256",
+    # "512",
+    # "512 512",
+    # "512 512 512",
+    # "1024",
+    # "1024 1024",
+    # "1024 1024 1024"
 )
 
 # 固定參數設置
@@ -34,8 +34,8 @@ $tau = 0.005
 $buffer_size = 10000
 $minimal_size = 1000
 $batch_size = 64
-$project_name = 'custom_ddpg_arch'
-$nums_day = 100
+$project_name = 'custom_ddpg_bp'
+$nums_day = 2
 $data_path = $data_path = "./train_data/taida_processed_${nums_day}_days_data.csv"
 $market_average_price_file_path = "./train_data/weighted_avg_price_${nums_day}_days.csv"
 
@@ -44,7 +44,7 @@ foreach ($hidden_layers in $hidden_layers_list) {
     # 將字串分割為陣列
     $hidden_layers_array = $hidden_layers.Split(" ")
 
-    foreach ($seed in 1..5) {
+    foreach ($seed in 1..1) {
         Write-Host "執行訓練: --hidden-layers $hidden_layers_array --seed $seed"
 
         # 傳遞參數，使用反引號進行多行命令

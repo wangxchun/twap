@@ -65,8 +65,8 @@ class PPOAgent:
         action = action_dist.sample()
         # Revised
         action = torch.clamp(action, 0.0, 0.1)
-        # print("action:", action)
-        return action.item()
+        # return action.item()
+        return action
 
     def update(self, transition_dict):
         states = torch.tensor(transition_dict['states'], dtype=torch.float).to(self.device)

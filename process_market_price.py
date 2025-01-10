@@ -1,12 +1,18 @@
 import pandas as pd
 import numpy as np
+import argparse
+
+# 設定命令列參數
+parser = argparse.ArgumentParser(description="Calculate weighted average price from CSV data.")
+parser.add_argument('--num-days', type=int, help="Number of days (N) for the data file")
+args = parser.parse_args()
 
 trading_type = 'sell'
 num_step = 100
 
 # 載入CSV檔案
-N = 2
-csv_file = f'./taida_random_{N}_days_data.csv'
+N = args.num_days
+csv_file = f'./train_data/taida_random_{N}_days_data.csv'
 data = pd.read_csv(csv_file)
 
 # 轉換時間為datetime格式
@@ -79,7 +85,7 @@ for date, group in grouped:
 
 # 轉換為 DataFrame
 processed_df = pd.DataFrame(processed_data)
-processed_df.to_csv(f'taida_processed_{N}_days_data.csv', index=False)
+processed_df.to_csv(f'./train_data/taida_processed_{N}_days_data.csv', index=False)
 
 # 1. 公司大概多少比例的交易會用到 WAP (預期回答，例如:一天交易額50億，大概10億用到WAP)
 # 2. 除了黑K策略之外，還有哪些策略會用到 WAP
