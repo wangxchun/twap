@@ -46,11 +46,13 @@ def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, mi
     if load_actor_path and load_critic_path:
         agent.load_model(load_actor_path, load_critic_path)
 
+    total_capture_list = []
+    shares_remaining_list = []
     return_list = []
     performance_list = []
+
     with tqdm(total=num_episodes, desc='Training') as pbar:
         for i_episode in range(num_episodes):
-            episode_return = 0
             state = env.reset(i_episode)
             done = False
             episode_transitions = []
@@ -59,11 +61,14 @@ def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, mi
                 next_state, reward, done, info = env.step(action)
                 episode_transitions.append((state, action, reward, next_state, done))
                 state = next_state
-                episode_return += reward
 
                 # Collect performance data
-                if "Performance" in info and not np.isinf(info["Performance"]):
-                    performance_list.append(info["Performance"])
+                if done:
+                    total_capture_list.append(info["Total Capture"])
+                    shares_remaining_list.append(info["Shares Remaining"])
+                    return_list.append(info["Reward"])
+                    if not np.isinf(info["Performance"]):
+                        performance_list.append(info["Performance"])
             
             # Add to buffer only when episode is done
             for transition in episode_transitions:
@@ -76,22 +81,21 @@ def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, mi
                 agent.update(transition_dict)
 
              # Log performance every nums_day episodes
-            # if (i_episode + 1) % nums_day == 0 and performance_list:
             if (i_episode + 1) % nums_day == 0:
-                if performance_list:
+                    avg_total_capture = sum(total_capture_list) / len(total_capture_list)
+                    avg_shares_remaining = sum(shares_remaining_list) / len(shares_remaining_list)
+                    avg_return = sum(return_list) / len(return_list)
                     avg_performance = sum(performance_list) / len(performance_list) * 1e5
-                    print("sum(performance_list):", sum(performance_list))
-                    print("len(performance_list):", len(performance_list))
-                    print(performance_list)
-                    print("avg_performance:", avg_performance)
-                    wandb.log({"Average Performance": avg_performance})
+                    print("avg_performance: ", avg_performance)
+                    wandb.log({
+                        "Total Capture": avg_total_capture,
+                        "Shares Remaining": avg_shares_remaining,
+                        "Return": avg_return,
+                        "Average Performance": avg_performance,
+                    })
                     performance_list = []
-                else:
-                    wandb.log({"Average Performance": 0})
 
-            return_list.append(episode_return)
-            pbar.set_postfix({'episode': '%d' % (i_episode + 1), 'return': '%.3f' % episode_return})
-            # wandb.log({"Episode Return": episode_return})
+            # pbar.set_postfix({'episode': '%d' % (i_episode + 1), 'return': '%.3f' % episode_return})
             pbar.update(1)
 
             # Save model at specified intervals
