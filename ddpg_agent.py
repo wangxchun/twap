@@ -65,31 +65,57 @@ class QValueNet(torch.nn.Module):
 
 class DDPGAgent:
     ''' DDPG '''
-    def __init__(self, state_dim, hidden_layers, action_dim, action_bound, sigma=None, actor_lr=None, critic_lr=None, tau=None, gamma=None, device='cuda'):
-        self.actor = PolicyNet(state_dim, hidden_layers, action_dim, action_bound).to(device)
-        self.critic = QValueNet(state_dim, hidden_layers, action_dim).to(device)
-        self.target_actor = PolicyNet(state_dim, hidden_layers, action_dim, action_bound).to(device)
-        self.target_critic = QValueNet(state_dim, hidden_layers, action_dim).to(device)
-        # Initialize the target value network and set it to the same parameters as the value network
-        self.target_critic.load_state_dict(self.critic.state_dict())
-        # Initialize the target policy network and set it to the same parameters as the policy network
-        self.target_actor.load_state_dict(self.actor.state_dict())
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=actor_lr)
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=critic_lr)
-        self.gamma = gamma
-        self.sigma = sigma  # Standard deviation for Gaussian noise, with the mean set to 0
-        self.tau = tau  # Soft update parameter for the target network
-        self.action_dim = action_dim
-        self.device = device
-        self.action_bound = action_bound
+    def __init__(self, state_dim, hidden_layers, action_dim, action_bound, test=False, load_path_actor=None, load_path_critic=None, sigma=None, actor_lr=None, critic_lr=None, tau=None, gamma=None, device='cuda'):
+        if test == False:
+            self.actor = PolicyNet(state_dim, hidden_layers, action_dim, action_bound).to(device)
+            self.critic = QValueNet(state_dim, hidden_layers, action_dim).to(device)
+            self.target_actor = PolicyNet(state_dim, hidden_layers, action_dim, action_bound).to(device)
+            self.target_critic = QValueNet(state_dim, hidden_layers, action_dim).to(device)
+            # Initialize the target value network and set it to the same parameters as the value network
+            self.target_critic.load_state_dict(self.critic.state_dict())
+            # Initialize the target policy network and set it to the same parameters as the policy network
+            self.target_actor.load_state_dict(self.actor.state_dict())
+            self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=actor_lr)
+            self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=critic_lr)
+            self.gamma = gamma
+            self.sigma = sigma  # Standard deviation for Gaussian noise, with the mean set to 0
+            self.tau = tau  # Soft update parameter for the target network
+            self.action_dim = action_dim
+            self.device = device
+            self.action_bound = action_bound
 
-    def take_action(self, state):
+        else:
+            self.actor = PolicyNet(state_dim, hidden_layers, action_dim, action_bound).to(device)
+            self.critic = QValueNet(state_dim, hidden_layers, action_dim).to(device)
+            self.target_actor = PolicyNet(state_dim, hidden_layers, action_dim, action_bound).to(device)
+            self.target_critic = QValueNet(state_dim, hidden_layers, action_dim).to(device)
+            self.device = device
+            self.action_bound = action_bound
+
+            # Load pre-trained models using load_model method
+            self.load_model(load_path_actor, load_path_critic)
+
+            # Set the networks to evaluation mode
+            self.actor.eval()
+            self.critic.eval()
+
+    # def take_action(self, state):
+    #     state = np.array(state)
+    #     state = torch.tensor(state, dtype=torch.float).to(self.device)
+    #     # import ipdb; ipdb.set_trace()
+    #     action = self.actor(state).item()
+    #     # Add noise to actions to encourage exploration
+    #     action = np.clip(action + self.sigma * np.random.randn(self.action_dim), 0, self.action_bound)
+    #     return action
+
+    def take_action(self, state, test=False):
         state = np.array(state)
         state = torch.tensor(state, dtype=torch.float).to(self.device)
-        # import ipdb; ipdb.set_trace()
         action = self.actor(state).item()
-        # Add noise to actions to encourage exploration
-        action = np.clip(action + self.sigma * np.random.randn(self.action_dim), 0, self.action_bound)
+        if not test:
+            # Add noise to actions to encourage exploration during training
+            action += self.sigma * np.random.randn(self.action_dim)
+        action = np.clip(action, 0, self.action_bound)  # Ensure action is within bounds
         return action
 
     def soft_update(self, net, target_net):

@@ -21,14 +21,15 @@ def train_agent(env, args, device):
     state_dim = env.observation_space_dimension()
     action_dim = env.action_space_dimension()
     action_bound = 0.1
+    # import ipdb; ipdb.set_trace()
     if args.agent_type == 'ddpg':
-        agent = DDPGAgent(state_dim, args.hidden_layers, action_dim, action_bound, args.sigma, args.actor_lr, args.critic_lr, args.tau, args.gamma, device)
+        agent = DDPGAgent(state_dim, args.hidden_layers, action_dim, action_bound, sigma = args.sigma, actor_lr = args.actor_lr, critic_lr = args.critic_lr, tau = args.tau, gamma = args.gamma, device = device)
     if args.agent_type == 'dqn':
         agent = DQNAgent(state_dim, args.hidden_layers, action_dim,  action_bound, args.lr, args.gamma, args.epsilon, args.target_update, device)
     if args.agent_type == 'ppo':
         agent = PPOAgent(state_dim, args.hidden_layers, action_dim, args.actor_lr, args.critic_lr, args.lmbda, args.ppo_epoch, args.epsilon, args.gamma, device)
 
-    return_list = rl_utils.train_off_policy_agent(env, agent, args.nums_day, args.n_episodes, replay_buffer, args.minimal_size, args.batch_size, save_interval=args.save_interval)
+    return_list = rl_utils.train_off_policy_agent(env, agent, args.nums_day, args.n_episodes, replay_buffer, args.minimal_size, args.batch_size,  seed=args.seed, save_interval=args.save_interval)
     
     return return_list
 
@@ -45,7 +46,7 @@ def test_ddpg(env, args, device):
 
     # Initialize the agent based on the specified type
     if args.agent_type == 'ddpg':
-        agent = DDPGAgent(state_dim, args.hidden_layers, action_dim, action_bound)
+        agent = DDPGAgent(state_dim, args.hidden_layers, action_dim, action_bound, test=True, load_path_actor=args.load_path_actor, load_path_critic=args.load_path_critic)
     elif args.agent_type == 'dqn':
         agent = DQNAgent(state_dim, args.hidden_layers, action_dim)
     elif args.agent_type == 'ppo':
@@ -53,8 +54,8 @@ def test_ddpg(env, args, device):
     else:
         raise ValueError(f"Unsupported agent type: {args.agent_type}")
 
-    # Load pretrained model weights
-    agent.load_model(actor_path=args.load_path_actor, critic_path=args.load_path_critic)
+    # # Load pretrained model weights
+    # agent.load_model(actor_path=args.load_path_actor, critic_path=args.load_path_critic)
 
     # Initialize test metrics
     total_rewards = []
@@ -63,14 +64,14 @@ def test_ddpg(env, args, device):
     performance_list = []
 
     # Run test episodes
-    for episode in range(args.n_test_episodes):
-        state = env.reset()  # Reset environment for each episode
+    for i_episode in range(args.n_test_episodes):
+        state = env.reset(i_episode)  # Reset environment for each episode
         episode_reward = 0
         done = False
         
         while not done:
             with torch.no_grad():
-                action = agent.take_action(state)  # Select action deterministically
+                action = agent.take_action(state, test=True)  # Select action deterministically
             
             next_state, reward, done, info = env.step(action)
             episode_reward += reward
@@ -84,7 +85,7 @@ def test_ddpg(env, args, device):
                     performance_list.append(info.get("Performance", 0))
         
         total_rewards.append(episode_reward)
-        print(f'Episode {episode + 1}: Total Reward = {episode_reward:.2f}')
+        print(f'Episode {i_episode + 1}: Total Reward = {episode_reward:.2f}')
 
     # Calculate average metrics
     avg_reward = sum(total_rewards) / args.n_test_episodes
@@ -126,6 +127,7 @@ def main(args):
 
         # Train the agent
         device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        return_list = train_agent(env, args, device=device)
 
         # Finish the wandb session
         wandb.finish()
@@ -135,12 +137,11 @@ def main(args):
         wandb.init(project="Test_DDPG_Trading_Agent", config=args)
 
         # Load environment parameters
-        env, fp_table, acp_table = utils.get_env_param()
-        env_name = 'Stocks Trading'
+        env = utils.get_env_param(args.nums_day, args.data_path, args.market_average_price_file_path)
 
         # Test the agent
         device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        total_rewards, avg_reward = test_ddpg(env, args, device=device)
+        total_rewards, avg_reward, avg_capture, avg_shares_remaining, avg_performance = test_ddpg(env, args, device=device)
 
         # Finish the wandb session
         wandb.finish()
@@ -166,6 +167,8 @@ if __name__ == "__main__":
     # TEST
     parser.add_argument("--train-or-test", type=str, default='train', help="Train or Test")
     parser.add_argument("--n-test-episodes", type=int, default=10, help="Number of episodes for testing")
+    parser.add_argument("--load-path-actor", type=str, default=f'./models/ddpg_actor_ep_200_day_2_seed_1.pth', help="Load Path Actor")
+    parser.add_argument("--load-path-critic", type=str, default=f'./models/ddpg_actor_ep_200_day_2_seed_1.pth', help="Load Path Critic")
 
     # Agent Type
     parser.add_argument("--agent-type", type=str, default='DDPG', help="Agnet Type")

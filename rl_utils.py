@@ -32,7 +32,7 @@ def moving_average(a, window_size):
     end = (np.cumsum(a[:-window_size:-1])[::2] / r)[::-1]
     return np.concatenate((begin, middle, end))
 
-def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, minimal_size, batch_size, save_path_actor=None, save_path_critic=None, save_interval=100, load_actor_path=None, load_critic_path=None):
+def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, minimal_size, batch_size, seed, save_path_actor=None, save_path_critic=None, save_interval=100, load_actor_path=None, load_critic_path=None):
 
     # 確保 model 資料夾存在
     model_dir = "model"
@@ -108,8 +108,8 @@ def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, mi
             # Save model at specified intervals
             if (i_episode + 1) % save_interval == 0:
                 if agent_type == 'ddpg':
-                    save_path_actor = os.path.join(model_dir, f"ddpg_actor_ep_{num_episodes}_day_{nums_day}")
-                    save_path_critic = os.path.join(model_dir, f"ddpg_critic_ep_{num_episodes}_day_{nums_day}")
+                    save_path_actor = os.path.join(model_dir, f"ddpg_actor_ep_{num_episodes}_day_{nums_day}_seed_{seed}.pth")
+                    save_path_critic = os.path.join(model_dir, f"ddpg_critic_ep_{num_episodes}_day_{nums_day}_seed_{seed}.pth")
                     agent.save_model(save_path_actor, save_path_critic)
                     print(f"Model saved to: {save_path_actor} and {save_path_critic}")
                 if agent_type == 'dqn' or agent_type == 'ppo':
