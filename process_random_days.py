@@ -3,7 +3,7 @@ import argparse
 
 # 設定命令列參數
 parser = argparse.ArgumentParser(description="Calculate weighted average price from CSV data.")
-parser.add_argument('--num-days', type=int, help="Number of days (N) for the data file")
+parser.add_argument('--num-days', type=int, default=100, help="Number of days (N) for the data file")
 args = parser.parse_args()
 
 # 讀取CSV檔案
@@ -25,4 +25,4 @@ num_rows = random_data.shape[0]
 print(f"Number of rows: {num_rows}")
 
 # 查看篩選後的資料
-random_data.to_csv(f'./train_data/taida_random_{N}_days_data.csv', index=False)
+random_data.to_csv(f'./train_data/taida_random_{N}_days_data_check.csv', index=False)

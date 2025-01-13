@@ -4,7 +4,7 @@ import argparse
 
 # 設定命令列參數
 parser = argparse.ArgumentParser(description="Calculate weighted average price from CSV data.")
-parser.add_argument('--num-days', type=int, help="Number of days (N) for the data file")
+parser.add_argument('--num-days', type=int, default=100, help="Number of days (N) for the data file")
 args = parser.parse_args()
 
 trading_type = 'sell'
