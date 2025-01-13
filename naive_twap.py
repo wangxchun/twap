@@ -9,7 +9,7 @@ class UniformSellingStrategy:
         self.shares_per_step = total_shares / time_horizon
 
     def run(self):
-        env = MarketEnvironment(time_horizon=self.time_horizon, total_shares=self.total_shares)
+        env = MarketEnvironment(nums_day = 2, data_path = f'./train_data/taida_processed_{2}_days_data.csv', market_average_price_file = f'./train_data/weighted_avg_price_{2}_days.csv', time_horizon=self.time_horizon, total_shares=self.total_shares)
         state = env.reset(i_episode=0)
 
         # while not done:
@@ -17,7 +17,6 @@ class UniformSellingStrategy:
             action = np.array([self.shares_per_step / self.total_shares])  # 每個時間步驟均分的股票數
             next_state, reward, done, info = env.step(action)
             state = next_state
-            # episode_reward += reward
             if done:
                 print("Episode finished")
                 break            

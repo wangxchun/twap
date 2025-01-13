@@ -14,29 +14,25 @@ class UniformSellingStrategy:
         env = MarketEnvironment(time_horizon=self.time_horizon, total_shares=self.total_shares)
         state = env.reset(i_episode=0)
 
-        total_capture_list = []
-        shares_remaining_list = []
-        return_list = []
         performance_list = []
 
-        with tqdm(total=num_episodes, desc='Training') as pbar:
-            for i_episode in range(num_episodes):
-                state = env.reset(i_episode)
-                done = False
-                episode_transitions = []
-                while not done:
-                    action = agent.take_action(state)
-                    next_state, reward, done, info = env.step(action)
-                    episode_transitions.append((state, action, reward, next_state, done))
-                    state = next_state
+        for i_episode in range(args.nums_day):
+            state = env.reset(i_episode)
+            done = False
+            while not done:
+                action = np.array([self.shares_per_step / self.total_shares])  # 每個時間步驟均分的股票數
+                next_state, reward, done, info = env.step(action)
 
-                    # Collect performance data
-                    if done:
-                        total_capture_list.append(info["Total Capture"])
-                        shares_remaining_list.append(info["Shares Remaining"])
-                        return_list.append(info["Reward"])
-                        if not np.isinf(info["Performance"]):
-                            performance_list.append(info["Performance"])     
+                # Collect performance data
+                if done and not np.isinf(info["Performance"]):
+                    performance_list.append(info["Performance"])
+    
+             # Log performance every nums_day episodes
+            if (i_episode + 1) % args.nums_day == 0:
+                    avg_performance = sum(performance_list) / len(performance_list) * 1e5
+                    print("avg_performance: ", avg_performance)
+                    performance_list = []
+                        
 
         env.stop_transactions()
 
@@ -45,7 +41,7 @@ if __name__ == "__main__":
     time_horizon = 100
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--wandb-run-name", type=str, default=f'test', help="Wandb Run Name")
+    parser.add_argument("--nums-day", type=int, default=100, help="Number of episodes for testing")
     args = parser.parse_args()
 
     wandb.init(project='Naive Twap', name="test")
