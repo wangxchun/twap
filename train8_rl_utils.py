@@ -33,41 +33,82 @@ def train_agent(env, args, device):
     return return_list
 
 def test_ddpg(env, args, device):
-    
+    # Set random seeds for reproducibility
     random.seed(args.seed)
     np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+
+    # Get environment and agent parameters
     state_dim = env.observation_space_dimension()
     action_dim = env.action_space_dimension()
     action_bound = 0.1
+
+    # Initialize the agent based on the specified type
     if args.agent_type == 'ddpg':
         agent = DDPGAgent(state_dim, args.hidden_layers, action_dim, action_bound)
-    if args.agent_type == 'dqn':
-        agent = DQNAgent(state_dim, args.hidden_layers, action_dim,  action_bound)
-    if args.agent_type == 'ppo':
+    elif args.agent_type == 'dqn':
         agent = DQNAgent(state_dim, args.hidden_layers, action_dim)
+    elif args.agent_type == 'ppo':
+        agent = PPOAgent(state_dim, args.hidden_layers, action_dim)
+    else:
+        raise ValueError(f"Unsupported agent type: {args.agent_type}")
+
+    # Load pretrained model weights
     agent.load_model(actor_path=args.load_path_actor, critic_path=args.load_path_critic)
 
+    # Initialize test metrics
     total_rewards = []
+    capture_list = []
+    shares_remaining_list = []
+    performance_list = []
 
+    # Run test episodes
     for episode in range(args.n_test_episodes):
-        state = env.reset()  # Reset the environment for each episode
+        state = env.reset()  # Reset environment for each episode
         episode_reward = 0
         done = False
         
         while not done:
             with torch.no_grad():
-                action = agent.take_action(state)  # Select action without noise
+                action = agent.take_action(state)  # Select action deterministically
             
-            next_state, reward, done, _ = env.step(action)
+            next_state, reward, done, info = env.step(action)
             episode_reward += reward
             state = next_state
+
+            # Collect additional metrics if available
+            if done:
+                capture_list.append(info.get("Total Capture", 0))
+                shares_remaining_list.append(info.get("Shares Remaining", 0))
+                if not np.isinf(info.get("Performance", float('inf'))):
+                    performance_list.append(info.get("Performance", 0))
         
         total_rewards.append(episode_reward)
         print(f'Episode {episode + 1}: Total Reward = {episode_reward:.2f}')
 
+    # Calculate average metrics
     avg_reward = sum(total_rewards) / args.n_test_episodes
-    print(f'Average Reward over {args.n_test_episodes} episodes: {avg_reward:.2f}')
-    return total_rewards, avg_reward
+    avg_capture = sum(capture_list) / len(capture_list) if capture_list else 0
+    avg_shares_remaining = sum(shares_remaining_list) / len(shares_remaining_list) if shares_remaining_list else 0
+    avg_performance = (sum(performance_list) / len(performance_list) * 1e5) if performance_list else 0
+
+    # Log metrics
+    print(f'\nTest Results over {args.n_test_episodes} episodes:')
+    print(f'  Average Reward: {avg_reward:.2f}')
+    print(f'  Average Total Capture: {avg_capture:.2f}')
+    print(f'  Average Shares Remaining: {avg_shares_remaining:.2f}')
+    print(f'  Average Performance: {avg_performance:.2f}')
+
+    # Optional: Log results to an external logger (e.g., WandB)
+    wandb.log({
+        "Test Average Reward": avg_reward,
+        "Test Average Total Capture": avg_capture,
+        "Test Average Shares Remaining": avg_shares_remaining,
+        "Test Average Performance": avg_performance,
+    })
+
+    return total_rewards, avg_reward, avg_capture, avg_shares_remaining, avg_performance
+
 
 # Define a function to parse hidden_layers
 def parse_hidden_layers(s):
@@ -78,23 +119,13 @@ def main(args):
     
     if args.train_or_test == 'train':
         # Initialize Weights & Biases
-        # name=",".join(map(str, args.hidden_layers)
         wandb.init(project=args.project_name, config=args, name=args.wandb_run_name)
         
         # Load environment parameters
         env = utils.get_env_param(args.nums_day, args.data_path, args.market_average_price_file_path)
-        env_name = 'Stocks Trading'
 
         # Train the agent
         device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        return_list = train_agent(env, args, device=device)
-
-        episodes_list = list(range(len(return_list)))
-        plt.plot(episodes_list, return_list)
-        plt.xlabel('Episodes')
-        plt.ylabel('Returns')
-        plt.title('DDPG on {}'.format(env_name))
-        plt.savefig('Returns.png')
 
         # Finish the wandb session
         wandb.finish()
