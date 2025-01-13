@@ -134,7 +134,7 @@ def main(args):
 
     elif args.train_or_test == 'test':
         # Initialize Weights & Biases
-        wandb.init(project="Test_DDPG_Trading_Agent", config=args)
+        wandb.init(project=args.project_name, config=args, name=args.wandb_run_name)
 
         # Load environment parameters
         env = utils.get_env_param(args.nums_day, args.data_path, args.market_average_price_file_path)

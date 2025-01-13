@@ -5,12 +5,14 @@ $nums_day = 100
 $data_path = "./train_data/taida_processed_${nums_day}_days_data.csv"
 $market_average_price_file_path = "./train_data/weighted_avg_price_${nums_day}_days.csv"
 $n_test_episodes = 100
-# $n_episodes_list = @(200, 500, 1000, 5000, 10000)
-$n_episodes_list = @(200)
+$n_episodes_list = @(200, 500, 1000, 5000, 10000)
+$project_name = 'Test_DDPG_ep'
 
 # 循環執行
 foreach ($n_episodes in $n_episodes_list) {
-    foreach ($seed in 1..1) {
+    foreach ($seed in 1..5) {
+        $wandb_run_name = "ep_${n_episodes}"
+
         # 設置模型載入路徑
         $load_path_actor = "./model/ddpg_actor_ep_${n_episodes}_day_${nums_day}_seed_${seed}.pth"
         $load_path_critic = "./model/ddpg_critic_ep_${n_episodes}_day_${nums_day}_seed_${seed}.pth"
@@ -25,10 +27,12 @@ foreach ($n_episodes in $n_episodes_list) {
             --n-test-episodes $n_test_episodes `
             --hidden-layers $hidden_layers `
             --seed $seed `
+            --project-name $project_name `
             --data-path $data_path `
             --market-average-price-file-path $market_average_price_file_path `
             --nums-day $nums_day `
             --load-path-actor $load_path_actor `
-            --load-path-critic $load_path_critic
+            --load-path-critic $load_path_critic `
+            --wandb-run-name $wandb_run_name
     }
 }
