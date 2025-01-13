@@ -99,15 +99,6 @@ class DDPGAgent:
             self.actor.eval()
             self.critic.eval()
 
-    # def take_action(self, state):
-    #     state = np.array(state)
-    #     state = torch.tensor(state, dtype=torch.float).to(self.device)
-    #     # import ipdb; ipdb.set_trace()
-    #     action = self.actor(state).item()
-    #     # Add noise to actions to encourage exploration
-    #     action = np.clip(action + self.sigma * np.random.randn(self.action_dim), 0, self.action_bound)
-    #     return action
-
     def take_action(self, state, test=False):
         state = np.array(state)
         state = torch.tensor(state, dtype=torch.float).to(self.device)
