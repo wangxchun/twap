@@ -21,11 +21,11 @@ def train_agent(env, args, device):
     state_dim = env.observation_space_dimension()
     action_dim = env.action_space_dimension()
     action_bound = 0.1
-    if args.agent_type == 'DDPG':
+    if args.agent_type == 'ddpg':
         agent = DDPGAgent(state_dim, args.hidden_layers, action_dim, action_bound, args.sigma, args.actor_lr, args.critic_lr, args.tau, args.gamma, device)
-    if args.agent_type == 'DQN':
+    if args.agent_type == 'dqn':
         agent = DQNAgent(state_dim, args.hidden_layers, action_dim,  action_bound, args.lr, args.gamma, args.epsilon, args.target_update, device)
-    if args.agent_type == 'PPO':
+    if args.agent_type == 'ppo':
         agent = PPOAgent(state_dim, args.hidden_layers, action_dim, args.actor_lr, args.critic_lr, args.lmbda, args.ppo_epoch, args.epsilon, args.gamma, device)
 
     return_list = rl_utils.train_off_policy_agent(env, agent, args.nums_day, args.n_episodes, replay_buffer, args.minimal_size, args.batch_size, save_interval=args.save_interval)
@@ -39,11 +39,11 @@ def test_ddpg(env, args, device):
     state_dim = env.observation_space_dimension()
     action_dim = env.action_space_dimension()
     action_bound = 0.1
-    if args.agent_type == 'DDPG':
+    if args.agent_type == 'ddpg':
         agent = DDPGAgent(state_dim, args.hidden_layers, action_dim, action_bound)
-    if args.agent_type == 'DQN':
+    if args.agent_type == 'dqn':
         agent = DQNAgent(state_dim, args.hidden_layers, action_dim,  action_bound)
-    if args.agent_type == 'PPO':
+    if args.agent_type == 'ppo':
         agent = DQNAgent(state_dim, args.hidden_layers, action_dim)
     agent.load_model(actor_path=args.load_path_actor, critic_path=args.load_path_critic)
 

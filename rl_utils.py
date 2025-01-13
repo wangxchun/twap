@@ -34,6 +34,11 @@ def moving_average(a, window_size):
 
 def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, minimal_size, batch_size, save_path_actor=None, save_path_critic=None, save_interval=100, load_actor_path=None, load_critic_path=None):
 
+    # 確保 model 資料夾存在
+    model_dir = "model"
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+
     # Get Agent Type
     agent_str = str(agent)
     start = agent_str.find('<') + 1
@@ -98,18 +103,17 @@ def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, mi
                     return_list = []
                     performance_list = []
 
-            # pbar.set_postfix({'episode': '%d' % (i_episode + 1), 'return': '%.3f' % episode_return})
             pbar.update(1)
 
             # Save model at specified intervals
-            if save_path_actor and save_path_critic and (i_episode + 1) % save_interval == 0:
+            if (i_episode + 1) % save_interval == 0:
                 if agent_type == 'ddpg':
-                    save_path_actor = os.path.join("model", "ddpg_actor")
-                    save_path_critic = os.path.join("model", "ddpg_critic")
+                    save_path_actor = os.path.join(model_dir, f"ddpg_actor_ep_{num_episodes}_day_{nums_day}")
+                    save_path_critic = os.path.join(model_dir, f"ddpg_critic_ep_{num_episodes}_day_{nums_day}")
                     agent.save_model(save_path_actor, save_path_critic)
                     print(f"Model saved to: {save_path_actor} and {save_path_critic}")
                 if agent_type == 'dqn' or agent_type == 'ppo':
-                    save_path = os.path.join("model", agent_type) 
+                    save_path = os.path.join(model_dir, f"{agent_type}_ep_{num_episodes}_day_{nums_day}") 
                     agent.save_model(save_path)
                     print(f"Model saved to: {save_path}")
 
