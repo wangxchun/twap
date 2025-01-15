@@ -11,7 +11,7 @@ class UniformSellingStrategy:
         self.shares_per_step = total_shares / time_horizon
 
     def run(self, args):
-        env = MarketEnvironment(time_horizon=self.time_horizon, total_shares=self.total_shares)
+        env = MarketEnvironment(nums_day = args.nums_day, data_path = args.data_path, market_average_price_file = args.market_average_price_file, time_horizon=self.time_horizon, total_shares=self.total_shares)
         state = env.reset(i_episode=0)
 
         performance_list = []
@@ -41,7 +41,9 @@ if __name__ == "__main__":
     time_horizon = 100
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--nums-day", type=int, default=100, help="Number of episodes for testing")
+    parser.add_argument("--nums-day", type=int, default=25, help="Number of episodes for testing")
+    parser.add_argument('--data_path', type=str, default='./test_data/taida_processed_25_days_data.csv', help='Path to training data CSV')
+    parser.add_argument('--market_average_price_file', type=str, default='./test_data/weighted_avg_price_25_days.csv', help='Path to market average price CSV')
     args = parser.parse_args()
 
     wandb.init(project='Naive Twap', name="test")
