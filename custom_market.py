@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import collections
 import wandb
+import math
 
 class MarketEnvironment:
     def __init__(self, nums_day = 2, data_path = f'./train_data/taida_processed_{2}_days_data.csv', market_average_price_file = f'./train_data/weighted_avg_price_{2}_days.csv', time_horizon=100, total_shares=1000):
@@ -29,7 +30,7 @@ class MarketEnvironment:
     def reset(self, i_episode):
         self.shares_remaining = 1
         self.totalCapture = 0
-        self.logReturns = collections.deque(np.zeros(6))
+        self.logReturns = collections.deque(np.ones(6))
         self.market_prices = []
 
         self.current_time = i_episode * self.timeHorizon
@@ -49,20 +50,19 @@ class MarketEnvironment:
 
         if self.done:
             raise ValueError("Environment has finished. Please reset.")
-
+        
         shares_to_sell = min(action.item(), self.shares_remaining)
 
         # 更新市場價格
         self.currentPrice = self.data['market_price'].iloc[self.current_time % (self.nums_day * self.timeHorizon)].item()
-        # self.currentPrice = self.data['market_price'].iloc[self.current_time // self.timeHorizon]
-        # import ipdb; ipdb.set_trace()
 
         self.shares_remaining -= shares_to_sell
         self.totalCapture += shares_to_sell * self.totalShares * self.currentPrice
         self.trade_list.append((self.current_time, shares_to_sell))
 
         # Update log returns but do it only if not done yet
-        self.logReturns.append(np.log(self.currentPrice/self.prevPrice))
+        # self.logReturns.append(np.log(self.currentPrice/self.prevPrice))
+        self.logReturns.append((self.currentPrice - self.prevPrice)*100)
         self.logReturns.popleft()
 
         # Calculate the weighted average price and market average price only after checking if done
@@ -81,20 +81,16 @@ class MarketEnvironment:
         
         # Check for termination condition
         if (self.current_time + 1) % self.timeHorizon == 0 or self.shares_remaining <= 0:
-            if self.shares_remaining > 0.5:
-                reward = -1000
             performance = (weighted_average_price - self.market_average_price) / self.market_average_price
+            reward =  (performance + 1000) * 1000
+            # if self.shares_remaining > 0.5:
+            #     reward = -1000000
+            # else:
+            #     reward =  (performance + 100) * 1000
             print("weighted_average_price:", weighted_average_price)
             print("market_average_price:", self.market_average_price)
             print("performance:", performance * 1e5)
             self.done = True
-
-            # wandb.log({
-            #     "Total Capture": self.totalCapture,
-            #     "Shares Remaining": self.shares_remaining,
-            #     "Reward": reward,
-            #     # "Performance (bp)": performance * 1e5,
-            # })
 
             info = {"Total Capture": self.totalCapture, "Shares Remaining": self.shares_remaining, "Reward": reward, "Performance": performance}
 

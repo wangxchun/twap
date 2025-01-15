@@ -12,6 +12,9 @@ import rl_utils
 from rl_utils import str2bool
 import random 
 
+def str2bool(v):
+    return v.lower() == "true"
+
 def train_agent(env, args, device):
 
     random.seed(args.seed)
@@ -21,7 +24,6 @@ def train_agent(env, args, device):
     state_dim = env.observation_space_dimension()
     action_dim = env.action_space_dimension()
     action_bound = 0.1
-    # import ipdb; ipdb.set_trace()
     if args.agent_type == 'ddpg':
         agent = DDPGAgent(state_dim, args.hidden_layers, action_dim, action_bound, sigma = args.sigma, actor_lr = args.actor_lr, critic_lr = args.critic_lr, tau = args.tau, gamma = args.gamma, device = device)
     if args.agent_type == 'dqn':
@@ -53,9 +55,6 @@ def test_ddpg(env, args, device):
         agent = PPOAgent(state_dim, args.hidden_layers, action_dim)
     else:
         raise ValueError(f"Unsupported agent type: {args.agent_type}")
-
-    # # Load pretrained model weights
-    # agent.load_model(actor_path=args.load_path_actor, critic_path=args.load_path_critic)
 
     # Initialize test metrics
     total_rewards = []
@@ -196,6 +195,7 @@ if __name__ == "__main__":
     parser.add_argument("--data-path", type=str, default=f'./train_data/taida_processed_{2}_days_data.csv', help="Data Path")
     parser.add_argument("--market-average-price-file-path", type=str, default=f'./train_data/weighted_avg_price_{2}_days.csv', help="Market Average Price File Path")
     parser.add_argument("--wandb-run-name", type=str, default=f'test', help="Wandb Run Name")
+    parser.add_argument("--test-reward-function", type=str2bool, default=False)
 
     args = parser.parse_args()
     main(args)
