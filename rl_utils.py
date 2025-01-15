@@ -58,19 +58,16 @@ def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, mi
 
     with tqdm(total=num_episodes, desc='Training') as pbar:
         for i_episode in range(num_episodes):
-            # episode_return = 0
-            state = env.reset(i_episode%2)
+            state = env.reset(i_episode)
             done = False
+            episode_transitions = []
             while not done:
                 action = agent.take_action(state)
+                # print("state:", state)
+                # print("action:", action)
                 next_state, reward, done, info = env.step(action)
-                replay_buffer.add(state, action, reward, next_state, done)
+                episode_transitions.append((state, action, reward, next_state, done))
                 state = next_state
-                # episode_return += reward
-                if replay_buffer.size() > minimal_size:
-                    b_s, b_a, b_r, b_ns, b_d = replay_buffer.sample(batch_size)
-                    transition_dict = {'states': b_s, 'actions': b_a, 'next_states': b_ns, 'rewards': b_r, 'dones': b_d}
-                    agent.update(transition_dict)
 
                 # Collect performance data
                 if done:
@@ -79,6 +76,16 @@ def train_off_policy_agent(env, agent, nums_day, num_episodes, replay_buffer, mi
                     return_list.append(info["Reward"])
                     if not np.isinf(info["Performance"]):
                         performance_list.append(info["Performance"])
+            
+            # Add to buffer only when episode is done
+            for transition in episode_transitions:
+                replay_buffer.add(*transition)
+
+            # Update only when episode is done
+            if replay_buffer.size() > minimal_size:
+                b_s, b_a, b_r, b_ns, b_d = replay_buffer.sample(batch_size)
+                transition_dict = {'states': b_s, 'actions': b_a, 'next_states': b_ns, 'rewards': b_r, 'dones': b_d}
+                agent.update(transition_dict)
 
              # Log performance every nums_day episodes
             if (i_episode + 1) % nums_day == 0:

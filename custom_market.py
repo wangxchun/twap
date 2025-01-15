@@ -51,6 +51,7 @@ class MarketEnvironment:
         if self.done:
             raise ValueError("Environment has finished. Please reset.")
         
+        
         shares_to_sell = min(action.item(), self.shares_remaining)
 
         # 更新市場價格
@@ -61,8 +62,8 @@ class MarketEnvironment:
         self.trade_list.append((self.current_time, shares_to_sell))
 
         # Update log returns but do it only if not done yet
-        # self.logReturns.append(np.log(self.currentPrice/self.prevPrice))
-        self.logReturns.append((self.currentPrice - self.prevPrice)*100)
+        self.logReturns.append(np.log(self.currentPrice/self.prevPrice))
+        # self.logReturns.append((self.currentPrice - self.prevPrice)*100)
         self.logReturns.popleft()
 
         # Calculate the weighted average price and market average price only after checking if done
@@ -72,7 +73,7 @@ class MarketEnvironment:
             total_shares_sold = sum([trade[1] * self.totalShares for trade in self.trade_list])
             weighted_average_price = total_value_sold / total_shares_sold if total_shares_sold > 0 else 0
 
-        reward =  weighted_average_price
+        reward =  (self.currentPrice - self.market_average_price) * shares_to_sell * self.totalShares
         print("self.shares_remaining:", self.shares_remaining)
 
         # 更新狀態，將最近6個價格納入
@@ -82,11 +83,10 @@ class MarketEnvironment:
         # Check for termination condition
         if (self.current_time + 1) % self.timeHorizon == 0 or self.shares_remaining <= 0:
             performance = (weighted_average_price - self.market_average_price) / self.market_average_price
-            reward =  (performance + 1000) * 1000
-            # if self.shares_remaining > 0.5:
-            #     reward = -1000000
+            if self.shares_remaining > 0.01:
+                reward = reward - 10
             # else:
-            #     reward =  (performance + 100) * 1000
+            #     reward =  (performance + 1000) * 1000
             print("weighted_average_price:", weighted_average_price)
             print("market_average_price:", self.market_average_price)
             print("performance:", performance * 1e5)

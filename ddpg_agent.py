@@ -33,7 +33,8 @@ class PolicyNet(torch.nn.Module):
     def forward(self, x): # x.size() = 8879996 ??
         for layer in self.hidden_layers:
             x = F.relu(layer(x))
-        return torch.tanh(self.output_layer(x)) * self.action_bound
+        # return torch.tanh(self.output_layer(x)) * self.action_bound
+        return torch.sigmoid(self.output_layer(x))
 
 
 class QValueNet(torch.nn.Module):
@@ -106,6 +107,7 @@ class DDPGAgent:
         if not test:
             # Add noise to actions to encourage exploration during training
             action += self.sigma * np.random.randn(self.action_dim)
+        print("** action:", action)
         action = np.clip(action, 0, self.action_bound)  # Ensure action is within bounds
         return action
 

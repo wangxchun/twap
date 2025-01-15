@@ -23,7 +23,7 @@ def train_agent(env, args, device):
     replay_buffer = rl_utils.ReplayBuffer(args.buffer_size)
     state_dim = env.observation_space_dimension()
     action_dim = env.action_space_dimension()
-    action_bound = 0.1
+    action_bound = 1
     if args.agent_type == 'ddpg':
         agent = DDPGAgent(state_dim, args.hidden_layers, action_dim, action_bound, sigma = args.sigma, actor_lr = args.actor_lr, critic_lr = args.critic_lr, tau = args.tau, gamma = args.gamma, device = device)
     if args.agent_type == 'dqn':

@@ -41,9 +41,9 @@ if __name__ == "__main__":
     time_horizon = 100
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--nums-day", type=int, default=25, help="Number of episodes for testing")
-    parser.add_argument('--data_path', type=str, default='./test_data/taida_processed_25_days_data.csv', help='Path to training data CSV')
-    parser.add_argument('--market_average_price_file', type=str, default='./test_data/weighted_avg_price_25_days.csv', help='Path to market average price CSV')
+    parser.add_argument("--nums-day", type=int, default=2, help="Number of episodes for testing")
+    parser.add_argument('--data_path', type=str, default='./train_data_minutes/taida_processed_2_days_data.csv', help='Path to training data CSV')
+    parser.add_argument('--market_average_price_file', type=str, default='./train_data_minutes/weighted_avg_price_2_days.csv', help='Path to market average price CSV')
     args = parser.parse_args()
 
     wandb.init(project='Naive Twap', name="test")

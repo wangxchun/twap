@@ -28,9 +28,11 @@ class UniformSellingStrategy:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Uniform Selling Strategy")
-    parser.add_argument('--nums_day', type=int, default=25, help='Number of days for training data')
-    parser.add_argument('--data_path', type=str, default='./test_data/taida_processed_25_days_data.csv', help='Path to training data CSV')
-    parser.add_argument('--market_average_price_file', type=str, default='./test_data/weighted_avg_price_25_days.csv', help='Path to market average price CSV')
+    parser.add_argument('--nums_day', type=int, default=100, help='Number of days for training data')
+    # parser.add_argument('--data_path', type=str, default='./test_data/taida_processed_25_days_data.csv', help='Path to training data CSV')
+    # parser.add_argument('--market_average_price_file', type=str, default='./test_data/weighted_avg_price_25_days.csv', help='Path to market average price CSV')
+    parser.add_argument('--data_path', type=str, default='./train_data_minutes/taida_processed_100_days_data.csv', help='Path to training data CSV')
+    parser.add_argument('--market_average_price_file', type=str, default='./train_data_minutes/weighted_avg_price_100_days.csv', help='Path to market average price CSV')
     args = parser.parse_args()
 
     total_shares = 1000
