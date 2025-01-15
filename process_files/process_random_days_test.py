@@ -8,7 +8,7 @@ parser.add_argument('--test-days', type=int, default=25, help="Number of days (M
 args = parser.parse_args()
 
 # 讀取 CSV 檔案
-csv_file = './train_data/t06_2308_delta_2023_2024.csv'
+csv_file = '../train_data/t06_2308_delta_2023_2024.csv'
 data = pd.read_csv(csv_file)
 num_rows = data.shape[0]
 print(f"Number of rows in original data: {num_rows}")
@@ -31,7 +31,7 @@ train_data = data[data['dd'].isin(random_train_days)]
 test_data = data[data['dd'].isin(random_test_days)]
 
 # 輸出檔案
-test_output_file = f'./test_data/taida_random_{M}_days_test_data.csv'
+test_output_file = f'../test_data/taida_random_{M}_days_test_data.csv'
 test_data.to_csv(test_output_file, index=False)
 
 # 確認輸出訊息

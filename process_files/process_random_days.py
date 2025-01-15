@@ -7,7 +7,7 @@ parser.add_argument('--num-days', type=int, default=100, help="Number of days (N
 args = parser.parse_args()
 
 # 讀取CSV檔案
-csv_file = './train_data/t06_2308_delta_2023_2024.csv'
+csv_file = '../train_data/t06_2308_delta_2023_2024.csv'
 data = pd.read_csv(csv_file)
 num_rows = data.shape[0]
 print(f"Number of rows: {num_rows}")
@@ -25,4 +25,4 @@ num_rows = random_data.shape[0]
 print(f"Number of rows: {num_rows}")
 
 # 查看篩選後的資料
-random_data.to_csv(f'./train_data/taida_random_{N}_days_data_check.csv', index=False)
+random_data.to_csv(f'../train_data/taida_random_{N}_days_data_check.csv', index=False)

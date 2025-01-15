@@ -8,7 +8,7 @@ args = parser.parse_args()
 
 # 載入CSV檔案
 N = args.num_days
-csv_file = f'./train_data/taida_random_{N}_days_data.csv'
+csv_file = f'../train_data/taida_random_{N}_days_data.csv'
 data = pd.read_csv(csv_file)
 
 # 轉換時間為datetime格式
@@ -47,7 +47,7 @@ result = grouped.apply(calculate_weighted_avg).reset_index(name='weighted_avg_pr
 print(result)
 
 # Save the result to a CSV file
-output_file = f'./train_data/weighted_avg_price_{N}_days.csv'
+output_file = f'../train_data/weighted_avg_price_{N}_days.csv'
 result.to_csv(output_file, index=False)
 
 print(f"Result saved to {output_file}")
